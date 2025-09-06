@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario Dinámico</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="auth-page">
+        <div class="auth-box">
+            <h1>Iniciar Sesión</h1>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Correo Electrónico</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Contraseña</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="main-app" style="display: none;">
+        <header class="app-header">
+            <div class="logo">
+                <h2>Formularios</h2>
+            </div>
+            <nav class="top-nav">
+                <a href="#" id="config-link">Configuración</a>
+                <a href="#" id="form-link">Rellenar</a>
+                <a href="#" id="results-link">Resultados</a>
+            </nav>
+            <div class="header-actions">
+                <div id="admin-controls"></div>
+                <button id="logout-btn" class="btn btn-secondary">Cerrar Sesión</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="page-header">
+                 <h1 id="main-title"></h1>
+            </div>
+
+            <div id="config-page" class="app-page">
+                <section id="form-config-section" class="config-section">
+                    <div class="section-header">
+                        <h3>Mis Formularios</h3>
+                        <button id="add-formulario-btn" class="btn btn-primary">Nuevo Formulario</button>
+                    </div>
+                    <div id="formulario-list"></div>
+                </section>
+
+                <section id="module-config-section" class="config-section" style="display: none;">
+                    <div class="section-header">
+                        <h3>Módulos de <span id="current-formulario-name"></span></h3>
+                        <div>
+                            <button id="back-to-forms-btn" class="btn btn-secondary">Volver</button>
+                            <button id="add-module-btn" class="btn btn-primary">Nuevo Módulo</button>
+                        </div>
+                    </div>
+                    <div id="module-list"></div>
+                </section>
+
+                <section id="question-config" class="config-section" style="display: none;">
+                     <div class="section-header">
+                        <h3>Preguntas de <span id="current-module-name"></span></h3>
+                        <button id="add-question-btn" class="btn btn-primary">Nueva Pregunta</button>
+                     </div>
+                     <div id="question-list"></div>
+                </section>
+            </div>
+
+            <div id="form-page" class="app-page">
+                <div id="forms-list-container"></div>
+                <div id="forms-render-container"></div>
+            </div>
+
+            <div id="results-page" class="app-page" style="display: none;">
+                <div class="section-header">
+                    <h3>Resultados de Envíos</h3>
+                    <button id="export-csv-btn" class="btn btn-primary">Descargar CSV</button>
+                </div>
+                <div class="results-layout">
+                    <div id="submissions-list" class="results-list">
+                        <!-- La lista de envíos se renderizará aquí -->
+                    </div>
+                    <div id="submission-details" class="results-details">
+                        <p>Selecciona un envío de la lista para ver sus respuestas.</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="create-user-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>Crear Nuevo Usuario</h3>
+            <form id="create-user-form">
+                <div class="form-group">
+                    <label for="create-email">Correo</label>
+                    <input type="email" id="create-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="create-password">Contraseña</label>
+                    <input type="password" id="create-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="create-rol">Rol</label>
+                    <select id="create-rol">
+                        <option value="" disabled selected>Selecciona un rol</option>
+                        <option value="usuario">Usuario</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Crear</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="question-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 id="question-modal-title">Añadir/Editar Pregunta</h3>
+            <form id="question-form">
+                <div class="form-group">
+                    <label for="question-text">Texto de la pregunta</label>
+                    <input type="text" id="question-text" required>
+                </div>
+                <div class="form-group">
+                    <label for="question-type">Tipo de pregunta</label>
+                    <select id="question-type">
+                        <option value="" disabled selected>Selecciona un tipo</option>
+                        <option value="texto">Texto</option>
+                        <option value="numero">Número</option>
+                        <option value="fecha">Fecha</option>
+                        <option value="booleano">Booleano (Sí/No)</option>
+                        <option value="seleccion_unica">Selección Única</option>
+                        <option value="seleccion_multiple">Selección Múltiple</option>
+                        <option value="seleccion_dependiente">Selección Dependiente</option>
+                        <option value="repartidor">Repartidor</option>
+                    </select>
+                </div>
+                <div id="options-group" class="form-group" style="display: none;">
+                    <label for="question-options">Opciones (separadas por coma)</label>
+                    <input type="text" id="question-options">
+                </div>
+                <div id="pattern-group" class="form-group" style="display: none;">
+                    <label for="question-pattern">Patrón de formato (expresión regular)</label>
+                    <input type="text" id="question-pattern">
+                </div>
+                <div id="dependent-group" class="form-group" style="display: none;">
+                    <label for="dependent-parent-field">Campo Padre</label>
+                    <input type="text" id="dependent-parent-field">
+                    <label for="dependent-child-field">Campo Hijo</label>
+                    <input type="text" id="dependent-child-field">
+                </div>
+                <div id="repartidor-fields-group" style="display: none;">
+                    <h4>Sub-preguntas del Repartidor</h4>
+                    <div id="repartidor-sub-questions-list"></div>
+                    <button type="button" id="add-repartidor-sub-question-btn" class="btn">Añadir Sub-pregunta</button>
+                </div>
+
+                <div class="form-group">
+                    <label><input type="checkbox" id="make-conditional-checkbox"> Hacer esta pregunta condicional</label>
+                </div>
+                <div id="conditional-group" class="form-group" style="display: none;">
+                    <p>Mostrar esta pregunta únicamente si:</p>
+                    <div class="form-group">
+                        <label for="conditional-trigger-question">La pregunta anterior:</label>
+                        <select id="conditional-trigger-question"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="conditional-trigger-value">...tiene el valor exacto de:</label>
+                        <input type="text" id="conditional-trigger-value" placeholder="Ej: Sí, Acepto, Opción A">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="alert-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 id="alert-title"></h3>
+            <p id="alert-message"></p>
+            <button id="alert-ok-button" class="btn btn-primary">OK</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
