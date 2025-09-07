@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentModuleId = null;
     let editingQuestionId = null;
     let cachedForms = [];
-    const API_BASE_URL = 'https://formularioapp.onrender.com';
+    const API_BASE_URL = 'http://localhost:3000';
 
     // --- API WRAPPER ---
     const api = {
@@ -91,7 +91,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchApi(endpoint, options = {}) {
         try {
-            const config = { method: options.method || 'GET', headers: { 'Content-Type': 'application/json' } };
+            const config = { 
+                method: options.method || 'GET', 
+                headers: { 'Content-Type': 'application/json' } 
+            };
+
+            // AÑADIDO: Incluir el ID de usuario en las cabeceras si está logueado
+            if (currentUser && currentUser.id) {
+                config.headers['X-User-ID'] = currentUser.id;
+            }
+
             if (options.body) config.body = JSON.stringify(options.body);
             const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
@@ -148,6 +157,75 @@ Stack: ${data.stack}`;
         resultsPage.style.display = 'none'; // Ocultar la nueva página
         pageToShow.style.display = 'block';
         // El título se puede manejar dentro de cada función de carga
+    }
+
+    function updateUIAccess(role) {
+        try {
+            console.log('updateUIAccess called with role:', role);
+
+            // Get references to elements, checking if they exist
+            const configLink = document.getElementById('config-link');
+            const resultsLink = document.getElementById('results-link');
+            const addFormularioBtn = document.getElementById('add-formulario-btn');
+            const addModuleBtn = document.getElementById('add-module-btn');
+            const addQuestionBtn = document.getElementById('add-question-btn');
+            const exportCsvBtn = document.getElementById('export-csv-btn');
+            const createUserModal = document.getElementById('create-user-modal');
+            const configPage = document.getElementById('config-page');
+            const resultsPage = document.getElementById('results-page');
+            const formLink = document.getElementById('form-link'); // Ensure formLink is also available
+
+            console.log('Elements found status:');
+            console.log('configLink:', configLink ? 'found' : 'NOT found');
+            console.log('resultsLink:', resultsLink ? 'found' : 'NOT found');
+            console.log('addFormularioBtn:', addFormularioBtn ? 'found' : 'NOT found');
+            console.log('addModuleBtn:', addModuleBtn ? 'found' : 'NOT found');
+            console.log('addQuestionBtn:', addQuestionBtn ? 'found' : 'NOT found');
+            console.log('exportCsvBtn:', exportCsvBtn ? 'found' : 'NOT found');
+            console.log('createUserModal:', createUserModal ? 'found' : 'NOT found');
+
+            // Ocultar todos los elementos de administrador por defecto
+            console.log('Hiding admin elements...');
+            if (configLink) configLink.style.display = 'none';
+            if (resultsLink) resultsLink.style.display = 'none';
+            if (addFormularioBtn) addFormularioBtn.style.display = 'none';
+            if (addModuleBtn) addModuleBtn.style.display = 'none';
+            if (addQuestionBtn) addQuestionBtn.style.display = 'none';
+            if (exportCsvBtn) exportCsvBtn.style.display = 'none';
+            if (createUserModal) createUserModal.style.display = 'none'; // Asegurarse de que el modal de crear usuario esté oculto
+
+            console.log('Current display states after initial hide:');
+            console.log('configLink display:', configLink ? configLink.style.display : 'N/A');
+            console.log('resultsLink display:', resultsLink ? resultsLink.style.display : 'N/A');
+            console.log('addFormularioBtn display:', addFormularioBtn ? addFormularioBtn.style.display : 'N/A');
+            console.log('addModuleBtn display:', addModuleBtn ? addModuleBtn.style.display : 'N/A');
+            console.log('addQuestionBtn display:', addQuestionBtn ? addQuestionBtn.style.display : 'N/A');
+            console.log('exportCsvBtn display:', exportCsvBtn ? exportCsvBtn.style.display : 'N/A');
+            console.log('createUserModal display:', createUserModal ? createUserModal.style.display : 'N/A');
+
+
+            if (role === 'admin') {
+                console.log('User is admin. Showing admin elements...');
+                if (configLink) configLink.style.display = 'block';
+                if (resultsLink) resultsLink.style.display = 'block';
+                if (addFormularioBtn) addFormularioBtn.style.display = 'inline-block'; // O el display original que tuvieran
+                if (addModuleBtn) addModuleBtn.style.display = 'inline-block';
+                if (addQuestionBtn) addQuestionBtn.style.display = 'inline-block';
+                if (exportCsvBtn) exportCsvBtn.style.display = 'inline-block';
+                // El botón de crear usuario se maneja en renderAdminControls
+            } else {
+                console.log('User is not admin. Hiding admin elements and redirecting if necessary...');
+                // Si el usuario no es admin y está en una página de admin, redirigirlo a la página de formularios
+                // Asegurarse de que configPage y resultsPage también estén disponibles
+                if (configPage && resultsPage && (configPage.style.display === 'block' || resultsPage.style.display === 'block')) {
+                    console.log('Redirecting non-admin user from admin page to form page.');
+                    if (formLink) formLink.click(); // Simular clic en el enlace de formularios
+                }
+            }
+            console.log('updateUIAccess finished.');
+        } catch (error) {
+            console.error('Error in updateUIAccess:', error);
+        }
     }
 
     // --- MANEJADORES DE EVENTOS ---
@@ -261,6 +339,8 @@ Stack: ${data.stack}`;
 
     // --- LÓGICA PRINCIPAL DE LA APP (ACTUALIZADA) ---
     async function initializeApp() {
+        console.log('Calling updateUIAccess from initializeApp...'); // NEW LOG
+        updateUIAccess(currentUser.rol); // Mover aquí la llamada
         configLink.addEventListener('click', async e => { 
             e.preventDefault(); 
             showAppPage(configPage); 
@@ -293,8 +373,8 @@ Stack: ${data.stack}`;
         const exportCsvBtn = document.getElementById('export-csv-btn');
         if(exportCsvBtn) exportCsvBtn.addEventListener('click', exportToCsv);
 
-        // Iniciar en la página de configuración por defecto
-        configLink.click();
+        // Iniciar en la página de formularios por defecto
+        formLink.click();
     }
 
     // --- INICIALIZACIÓN ---
@@ -1002,6 +1082,8 @@ Stack: ${data.stack}`;
         if (cell === null || cell === undefined) {
             return '';
         }
+        // Objects are now pre-flattened, so we just convert to string.
+        // If an object somehow still gets here, stringify it to avoid '[object Object]'.
         if (typeof cell === 'object') {
             cell = JSON.stringify(cell);
         }
@@ -1018,35 +1100,73 @@ Stack: ${data.stack}`;
             return showAlert('Info', 'No hay datos para exportar.');
         }
 
+        const allRows = [];
         const headers = new Set(['ID de Envío', 'Fecha', 'Formulario', 'Usuario']);
-        cachedSubmissions.forEach(sub => {
+
+        // Primera pasada: aplanar todas las respuestas y determinar los encabezados dinámicos
+        const flattenedData = cachedSubmissions.map(sub => {
+            const flatRow = {
+                'ID de Envío': sub.id,
+                'Fecha': new Date(sub.created_at).toLocaleString(),
+                'Formulario': sub.formularios ? sub.formularios.name : 'N/A',
+                'Usuario': sub.usuarios ? sub.usuarios.email : 'N/A'
+            };
+
+            const repartidorItems = [];
+            let repartidorKeyOriginal = null;
+
             if (sub.respuestas) {
-                Object.keys(sub.respuestas).forEach(key => headers.add(key));
+                for (const [key, value] of Object.entries(sub.respuestas)) {
+                    if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') {
+                        // Potencial repartidor
+                        repartidorKeyOriginal = key;
+                        value.forEach(item => {
+                            const repartidorItem = {};
+                            for (const [subKey, subValue] of Object.entries(item)) {
+                                const headerName = `${key}.${subKey}`;
+                                headers.add(headerName);
+                                repartidorItem[headerName] = subValue;
+                            }
+                            repartidorItems.push(repartidorItem);
+                        });
+                    } else if (typeof value === 'object' && value !== null) {
+                        // Objeto simple (como ubicación)
+                        for (const [subKey, subValue] of Object.entries(value)) {
+                            const headerName = `${key}.${subKey}`;
+                            headers.add(headerName);
+                            flatRow[headerName] = subValue;
+                        }
+                    } else {
+                        // Valor simple
+                        headers.add(key);
+                        flatRow[key] = value;
+                    }
+                }
+            }
+
+            // Si había un repartidor, crear una fila por cada item del repartidor
+            if (repartidorItems.length > 0) {
+                return repartidorItems.map(item => ({ ...flatRow, ...item }));
+            } else {
+                return [flatRow]; // Devolver como array para consistencia
             }
         });
+
+        // Aplanar el array de arrays
+        const finalRows = flattenedData.flat();
         const headerArray = [...headers];
 
-        let csvContent = headerArray.join(',') + '\r\n';
+        let csvContent = headerArray.map(escapeCsvCell).join(',') + '\r\n';
 
-        cachedSubmissions.forEach(sub => {
-            const row = headerArray.map(header => {
-                switch (header) {
-                    case 'ID de Envío':
-                        return sub.id;
-                    case 'Fecha':
-                        return new Date(sub.created_at).toLocaleString();
-                    case 'Formulario':
-                        return sub.formularios ? sub.formularios.name : 'N/A';
-                    case 'Usuario':
-                        return sub.usuarios ? sub.usuarios.email : 'N/A';
-                    default:
-                        return sub.respuestas && sub.respuestas[header] !== undefined ? sub.respuestas[header] : '';
-                }
+        finalRows.forEach(row => {
+            const rowValues = headerArray.map(header => {
+                const value = row[header];
+                return escapeCsvCell(value);
             });
-            csvContent += row.map(escapeCsvCell).join(',') + '\r\n';
+            csvContent += rowValues.join(',') + '\r\n';
         });
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); // Añadir BOM para Excel
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
@@ -1064,6 +1184,8 @@ Stack: ${data.stack}`;
         if (cell === null || cell === undefined) {
             return '';
         }
+        // Objects are now pre-flattened, so we just convert to string.
+        // If an object somehow still gets here, stringify it to avoid '[object Object]'.
         if (typeof cell === 'object') {
             cell = JSON.stringify(cell);
         }
@@ -1080,35 +1202,73 @@ Stack: ${data.stack}`;
             return showAlert('Info', 'No hay datos para exportar.');
         }
 
+        const allRows = [];
         const headers = new Set(['ID de Envío', 'Fecha', 'Formulario', 'Usuario']);
-        cachedSubmissions.forEach(sub => {
+
+        // Primera pasada: aplanar todas las respuestas y determinar los encabezados dinámicos
+        const flattenedData = cachedSubmissions.map(sub => {
+            const flatRow = {
+                'ID de Envío': sub.id,
+                'Fecha': new Date(sub.created_at).toLocaleString(),
+                'Formulario': sub.formularios ? sub.formularios.name : 'N/A',
+                'Usuario': sub.usuarios ? sub.usuarios.email : 'N/A'
+            };
+
+            const repartidorItems = [];
+            let repartidorKeyOriginal = null;
+
             if (sub.respuestas) {
-                Object.keys(sub.respuestas).forEach(key => headers.add(key));
+                for (const [key, value] of Object.entries(sub.respuestas)) {
+                    if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') {
+                        // Potencial repartidor
+                        repartidorKeyOriginal = key;
+                        value.forEach(item => {
+                            const repartidorItem = {};
+                            for (const [subKey, subValue] of Object.entries(item)) {
+                                const headerName = `${key}.${subKey}`;
+                                headers.add(headerName);
+                                repartidorItem[headerName] = subValue;
+                            }
+                            repartidorItems.push(repartidorItem);
+                        });
+                    } else if (typeof value === 'object' && value !== null) {
+                        // Objeto simple (como ubicación)
+                        for (const [subKey, subValue] of Object.entries(value)) {
+                            const headerName = `${key}.${subKey}`;
+                            headers.add(headerName);
+                            flatRow[headerName] = subValue;
+                        }
+                    } else {
+                        // Valor simple
+                        headers.add(key);
+                        flatRow[key] = value;
+                    }
+                }
+            }
+
+            // Si había un repartidor, crear una fila por cada item del repartidor
+            if (repartidorItems.length > 0) {
+                return repartidorItems.map(item => ({ ...flatRow, ...item }));
+            } else {
+                return [flatRow]; // Devolver como array para consistencia
             }
         });
+
+        // Aplanar el array de arrays
+        const finalRows = flattenedData.flat();
         const headerArray = [...headers];
 
-        let csvContent = headerArray.join(',') + '\r\n';
+        let csvContent = headerArray.map(escapeCsvCell).join(',') + '\r\n';
 
-        cachedSubmissions.forEach(sub => {
-            const row = headerArray.map(header => {
-                switch (header) {
-                    case 'ID de Envío':
-                        return sub.id;
-                    case 'Fecha':
-                        return new Date(sub.created_at).toLocaleString();
-                    case 'Formulario':
-                        return sub.formularios ? sub.formularios.name : 'N/A';
-                    case 'Usuario':
-                        return sub.usuarios ? sub.usuarios.email : 'N/A';
-                    default:
-                        return sub.respuestas && sub.respuestas[header] !== undefined ? sub.respuestas[header] : '';
-                }
+        finalRows.forEach(row => {
+            const rowValues = headerArray.map(header => {
+                const value = row[header];
+                return escapeCsvCell(value);
             });
-            csvContent += row.map(escapeCsvCell).join(',') + '\r\n';
+            csvContent += rowValues.join(',') + '\r\n';
         });
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); // Añadir BOM para Excel
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);

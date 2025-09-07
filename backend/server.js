@@ -24,6 +24,35 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 console.log('Cliente de Supabase inicializado.');
 
+// --- Middleware de Autenticación ---
+const adminOnly = async (req, res, next) => {
+    const userId = req.headers['x-user-id'];
+
+    if (!userId) {
+        return res.status(401).json({ error: 'No se proporcionó ID de usuario para la autorización.' });
+    }
+
+    try {
+        const { data: user, error } = await supabase
+            .from('usuarios')
+            .select('rol')
+            .eq('id', userId)
+            .single();
+
+        if (error || !user) {
+            return res.status(404).json({ error: 'Usuario de autorización no encontrado.' });
+        }
+
+        if (user.rol !== 'admin') {
+            return res.status(403).json({ error: 'Acceso denegado. Se requiere rol de administrador.' });
+        }
+
+        next();
+    } catch (error) {
+        res.status(500).json({ error: 'Error interno del servidor al verificar el rol.', details: error.message });
+    }
+};
+
 // --- Rutas de la API ---
 
 app.get('/', (req, res) => {
@@ -31,7 +60,7 @@ app.get('/', (req, res) => {
 });
 
 // --- Endpoints de Autenticación ---
-app.post('/auth/register', async (req, res) => {
+app.post('/auth/register', adminOnly, async (req, res) => {
     const { email, password, rol } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'El correo y la contraseña son obligatorios.' });
     try {
@@ -90,7 +119,7 @@ app.get('/formularios', async (req, res) => {
     }
 });
 
-app.post('/formularios', async (req, res) => {
+app.post('/formularios', adminOnly, async (req, res) => {
     const { name, created_by } = req.body;
     if (!name || !created_by) return res.status(400).json({ error: 'El nombre y el creador son obligatorios.' });
     try {
@@ -103,7 +132,7 @@ app.post('/formularios', async (req, res) => {
 });
 
 // --- Endpoints de Módulos ---
-app.post('/formularios/:formularioId/modulos', async (req, res) => {
+app.post('/formularios/:formularioId/modulos', adminOnly, async (req, res) => {
     const { formularioId } = req.params;
     const { name } = req.body;
     if (!name) return res.status(400).json({ error: 'El nombre del módulo es obligatorio.' });
@@ -118,8 +147,8 @@ app.post('/formularios/:formularioId/modulos', async (req, res) => {
     }
 });
 
-app.put('/modulos/:id', async (req, res) => { /* ... sin cambios ... */ });
-app.delete('/modulos/:id', async (req, res) => {
+app.put('/modulos/:id', adminOnly, async (req, res) => { /* ... sin cambios ... */ });
+app.delete('/modulos/:id', adminOnly, async (req, res) => {
     const { id } = req.params;
     console.log(`Backend: Recibida petición DELETE para módulo con ID: ${id}`);
     try {
@@ -138,7 +167,7 @@ app.delete('/modulos/:id', async (req, res) => {
 });
 
 // --- Endpoints de Preguntas ---
-app.post('/modulos/:moduloId/preguntas', async (req, res) => {
+app.post('/modulos/:moduloId/preguntas', adminOnly, async (req, res) => {
     const { moduloId } = req.params;
     const { text, type, rules } = req.body;
     if (!text || !type) return res.status(400).json({ error: 'El texto y el tipo son obligatorios.' });
@@ -153,7 +182,7 @@ app.post('/modulos/:moduloId/preguntas', async (req, res) => {
     }
 });
 
-app.put('/preguntas/:id', async (req, res) => {
+app.put('/preguntas/:id', adminOnly, async (req, res) => {
     const { id } = req.params;
     const { text, type, rules } = req.body;
     console.log(`Backend: PUT /preguntas/${id} - Recibido:`, { text, type, rules });
@@ -176,7 +205,7 @@ app.put('/preguntas/:id', async (req, res) => {
     }
 });
 
-app.delete('/preguntas/:id', async (req, res) => {
+app.delete('/preguntas/:id', adminOnly, async (req, res) => {
     const { id } = req.params;
     console.log(`Backend: Recibida petición DELETE para pregunta con ID: ${id}`);
     try {
@@ -226,7 +255,7 @@ app.get('/geodata/municipios/:departamento', async (req, res) => {
     }
 });
 
-app.get('/submissions', async (req, res) => {
+app.get('/submissions', adminOnly, async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('submissions')
@@ -248,7 +277,7 @@ app.get('/submissions', async (req, res) => {
 });
 
 // --- Endpoint de Reordenamiento ---
-app.post('/reorder', async (req, res) => {
+app.post('/reorder', adminOnly, async (req, res) => {
     const { table, ids } = req.body;
     if (!table || !Array.isArray(ids)) {
         return res.status(400).json({ error: 'Tabla e IDs son requeridos.' });
