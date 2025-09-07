@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentModuleId = null;
     let editingQuestionId = null;
     let cachedForms = [];
-    const API_BASE_URL = 'http://localhost:3000';
+    const API_BASE_URL = 'https://formularioapp.onrender.com';
 
     // --- API WRAPPER ---
     const api = {
