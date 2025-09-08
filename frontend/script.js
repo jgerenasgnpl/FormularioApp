@@ -50,6 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const addRepartidorSubQuestionBtn = document.getElementById('add-repartidor-sub-question-btn');
     const closeQuestionModalBtn = questionModal.querySelector('.close-button');
 
+    // --- NUEVO: Referencias para Lógica de Cantidad ---
+    const enableQuantityCheckbox = document.getElementById('enable-quantity-checkbox');
+    const quantityGroupDiv = document.getElementById('quantity-group');
+    const quantityMinInput = document.getElementById('quantity-min');
+    const quantityMaxInput = document.getElementById('quantity-max');
+
     // --- NUEVO: Referencias para Lógica Condicional ---
     const makeConditionalCheckbox = document.getElementById('make-conditional-checkbox');
     const conditionalGroupDiv = document.getElementById('conditional-group');
@@ -517,6 +523,12 @@ Stack: ${data.stack}`;
         dependentGroupDiv.style.display = 'none';
         repartidorFieldsGroupDiv.style.display = 'none';
         
+        // NUEVO: Resetear campos de cantidad
+        quantityGroupDiv.style.display = 'none';
+        enableQuantityCheckbox.checked = false;
+        quantityMinInput.value = '1';
+        quantityMaxInput.value = '10';
+
         conditionalGroupDiv.style.display = 'none';
         makeConditionalCheckbox.checked = false;
         conditionalTriggerValueInput.value = '';
@@ -528,7 +540,7 @@ Stack: ${data.stack}`;
         if (currentModuleId) {
             let module;
             for (const form of cachedForms) {
-                // Usar '==' en lugar de '===' para evitar problemas de tipo (string vs number)
+                // Usar '==' en lugar de '===' para evitar problemas de tipo (string vs number) 
                 const foundModule = (form.modulos || []).find(m => m.id == currentModuleId); 
                 if (foundModule) {
                     module = foundModule;
@@ -590,6 +602,13 @@ Stack: ${data.stack}`;
                 conditionalTriggerQuestionSelect.value = rules.conditional.triggerQuestionText;
                 conditionalTriggerValueInput.value = rules.conditional.triggerValue;
             }
+            // NUEVO: Cargar datos de cantidad si existen
+            if (rules.quantity) {
+                enableQuantityCheckbox.checked = true;
+                quantityGroupDiv.style.display = 'block';
+                quantityMinInput.value = rules.quantity.min;
+                quantityMaxInput.value = rules.quantity.max;
+            }
         } else {
             questionModal.querySelector('h3').textContent = 'Añadir Nueva Pregunta';
         }
@@ -647,6 +666,12 @@ Stack: ${data.stack}`;
     makeConditionalCheckbox.addEventListener('change', () => {
         conditionalGroupDiv.style.display = makeConditionalCheckbox.checked ? 'block' : 'none';
     });
+
+    // NUEVO: Lógica para el checkbox de habilitar cantidad
+    enableQuantityCheckbox.addEventListener('change', () => {
+        quantityGroupDiv.style.display = enableQuantityCheckbox.checked ? 'block' : 'none';
+    });
+
     repartidorSubQuestionsListDiv.addEventListener('change', e => {
         if (e.target.classList.contains('repartidor-sub-q-type')) {
             const item = e.target.closest('.repartidor-sub-question-item');
@@ -712,6 +737,16 @@ Stack: ${data.stack}`;
             }
             if (subQuestions.length === 0) return showAlert('Error', 'El repartidor necesita al menos una sub-pregunta.');
             rules.subQuestions = subQuestions;
+        }
+
+        // NUEVO: Guardar la regla de cantidad
+        if (enableQuantityCheckbox.checked) {
+            const min = parseInt(quantityMinInput.value, 10);
+            const max = parseInt(quantityMaxInput.value, 10);
+            if (isNaN(min) || isNaN(max) || min < 1 || max < min) {
+                return showAlert('Error', 'Los valores de cantidad mínima y máxima no son válidos.');
+            }
+            rules.quantity = { min, max };
         }
 
         // NUEVO: Guardar la regla condicional
@@ -919,22 +954,100 @@ Stack: ${data.stack}`;
             case 'fecha': inputEl = document.createElement('input'); inputEl.type = 'date'; break;
             case 'booleano': case 'terminos': inputEl = document.createElement('input'); inputEl.type = 'checkbox'; break;
             case 'seleccion_unica':
-                inputEl = document.createElement('select');
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = 'Selecciona una opción';
-                defaultOption.disabled = true;
-                defaultOption.selected = true;
-                inputEl.appendChild(defaultOption);
-                (rules.options || []).forEach(opt => { const o = document.createElement('option'); o.value = opt; o.textContent = opt; inputEl.appendChild(o); });
+                // MODIFICADO: para incluir selector de cantidad
+                if (rules.quantity) {
+                    inputEl = document.createElement('div');
+                    inputEl.className = 'quantity-options-group';
+                    (rules.options || []).forEach((opt, index) => {
+                        const optionId = `${id}-${index}`;
+                        const optionDiv = document.createElement('div');
+                        optionDiv.className = 'quantity-option-item';
+                        
+                        const radioInput = document.createElement('input');
+                        radioInput.type = 'radio';
+                        radioInput.id = optionId;
+                        radioInput.name = id;
+                        radioInput.value = opt;
+
+                        const radioLabel = document.createElement('label');
+                        radioLabel.setAttribute('for', optionId);
+                        radioLabel.textContent = opt;
+
+                        const quantitySelect = document.createElement('select');
+                        quantitySelect.id = `${optionId}-quantity`;
+                        quantitySelect.className = 'quantity-selector';
+                        quantitySelect.style.display = 'none'; // Oculto por defecto
+                        for (let i = rules.quantity.min; i <= rules.quantity.max; i++) {
+                            const qOpt = document.createElement('option');
+                            qOpt.value = i;
+                            qOpt.textContent = i;
+                            quantitySelect.appendChild(qOpt);
+                        }
+                        
+                        radioInput.addEventListener('change', () => {
+                            // Ocultar todos los selectores de cantidad del grupo
+                            inputEl.querySelectorAll('.quantity-selector').forEach(sel => sel.style.display = 'none');
+                            // Mostrar solo el selector de la opción seleccionada
+                            if(radioInput.checked) {
+                                quantitySelect.style.display = 'inline-block';
+                            }
+                        });
+
+                        optionDiv.appendChild(radioInput);
+                        optionDiv.appendChild(radioLabel);
+                        optionDiv.appendChild(quantitySelect);
+                        inputEl.appendChild(optionDiv);
+                    });
+                } else {
+                    inputEl = document.createElement('select');
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'Selecciona una opción';
+                    defaultOption.disabled = true;
+                    defaultOption.selected = true;
+                    inputEl.appendChild(defaultOption);
+                    (rules.options || []).forEach(opt => { const o = document.createElement('option'); o.value = opt; o.textContent = opt; inputEl.appendChild(o); });
+                }
                 break;
             case 'seleccion_multiple':
+                // MODIFICADO: para incluir selector de cantidad
                 inputEl = document.createElement('div');
                 inputEl.className = 'checkbox-group';
                 (rules.options || []).forEach((opt, index) => {
                     const checkDiv = document.createElement('div');
+                    checkDiv.className = 'quantity-option-item';
                     const checkId = `${id}-${index}`;
-                    checkDiv.innerHTML = `<input type="checkbox" id="${checkId}" name="${id}" value="${opt}"><label for="${checkId}" class="checkbox-label">${opt}</label>`;
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = checkId;
+                    checkbox.name = id;
+                    checkbox.value = opt;
+
+                    const label = document.createElement('label');
+                    label.setAttribute('for', checkId);
+                    label.className = 'checkbox-label';
+                    label.textContent = opt;
+                    
+                    checkDiv.appendChild(checkbox);
+                    checkDiv.appendChild(label);
+
+                    if (rules.quantity) {
+                        const quantitySelect = document.createElement('select');
+                        quantitySelect.id = `${checkId}-quantity`;
+                        quantitySelect.className = 'quantity-selector';
+                        quantitySelect.style.display = 'none'; // Oculto por defecto
+                        for (let i = rules.quantity.min; i <= rules.quantity.max; i++) {
+                            const qOpt = document.createElement('option');
+                            qOpt.value = i;
+                            qOpt.textContent = i;
+                            quantitySelect.appendChild(qOpt);
+                        }
+                        checkbox.addEventListener('change', () => {
+                            quantitySelect.style.display = checkbox.checked ? 'inline-block' : 'none';
+                        });
+                        checkDiv.appendChild(quantitySelect);
+                    }
                     inputEl.appendChild(checkDiv);
                 });
                 break;
@@ -973,9 +1086,7 @@ Stack: ${data.stack}`;
                                 opt.textContent = mun;
                                 childSelect.appendChild(opt);
                             });
-                        } catch (err) {
-                            console.error('Error cargando municipios:', err); childSelect.innerHTML = '<option value="" disabled selected>Error al cargar</option>';
-                        }
+                        } catch (err) { console.error('Error cargando municipios:', err); childSelect.innerHTML = '<option value="" disabled selected>Error al cargar</option>'; }
                     } else {
                         childSelect.innerHTML = '<option value="" disabled selected>Selecciona un Municipio</option>';
                     }
@@ -985,7 +1096,7 @@ Stack: ${data.stack}`;
                 break;
             default: inputEl = document.createElement('input'); inputEl.type = 'text'; break;
         }
-        if (type !== 'seleccion_multiple' && type !== 'seleccion_dependiente') { inputEl.id = id; inputEl.name = id; }
+        if (type !== 'seleccion_multiple' && type !== 'seleccion_dependiente' && !(type === 'seleccion_unica' && rules.quantity)) { inputEl.id = id; inputEl.name = id; }
         if (type === 'texto' && rules.pattern) { inputEl.pattern = rules.pattern; inputEl.title = `Debe seguir el formato: ${rules.pattern}`; }
         return inputEl;
     }
@@ -1040,7 +1151,30 @@ Stack: ${data.stack}`;
                 }
                 questionValue = repartidorItems;
             } else if (q.type === 'seleccion_multiple') {
-                questionValue = [...formEl.querySelectorAll(`input[name="${id}"]:checked`)].map(i => i.value);
+                // MODIFICADO: para manejar cantidad
+                const selected = [];
+                formEl.querySelectorAll(`input[name="${id}"]:checked`).forEach(input => {
+                    if (rules.quantity) {
+                        const quantitySelect = formEl.querySelector(`#${input.id}-quantity`);
+                        selected.push({ option: input.value, quantity: parseInt(quantitySelect.value, 10) });
+                    } else {
+                        selected.push(input.value);
+                    }
+                });
+                questionValue = selected;
+            } else if (q.type === 'seleccion_unica') {
+                // MODIFICADO: para manejar cantidad
+                const input = formEl.querySelector(`input[name="${id}"]:checked`);
+                if (input) {
+                    if (rules.quantity) {
+                        const quantitySelect = formEl.querySelector(`#${input.id}-quantity`);
+                        questionValue = { option: input.value, quantity: parseInt(quantitySelect.value, 10) };
+                    }
+                } else {
+                    // This case is for the original <select> based implementation
+                    const selectInput = formEl.querySelector(`select[name="${id}"]`);
+                    if(selectInput) questionValue = selectInput.value;
+                }
             } else if (q.type === 'seleccion_dependiente') {
                 const parentVal = formEl.querySelector(`select[name="${id}-parent"]`).value;
                 const childVal = formEl.querySelector(`select[name="${id}-child"]`).value;

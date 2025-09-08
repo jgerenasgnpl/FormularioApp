@@ -172,6 +172,15 @@
                 </div>
 
                 <div class="form-group">
+                    <label><input type="checkbox" id="enable-quantity-checkbox"> Habilitar Cantidad</label>
+                </div>
+                <div id="quantity-group" class="form-group" style="display: none;">
+                    <label for="quantity-min">Cantidad Mínima:</label>
+                    <input type="number" id="quantity-min" value="1" min="1">
+                    <label for="quantity-max">Cantidad Máxima:</label>
+                    <input type="number" id="quantity-max" value="10" min="1">
+                </div>
+                <div class="form-group">
                     <label><input type="checkbox" id="make-conditional-checkbox"> Hacer esta pregunta condicional</label>
                 </div>
                 <div id="conditional-group" class="form-group" style="display: none;">
