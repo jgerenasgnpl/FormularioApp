@@ -1085,20 +1085,60 @@ document.addEventListener('DOMContentLoaded', () => {
                         subQuestions.forEach(subQ => {
                             const subId = `sub-q-${item.dataset.itemIndex}-${subQ.name.replace(/\s+/g, '-')}`;
                             const subInputWrapper = item.querySelector(`[data-question-name="${subQ.name}"]`);
-                            
+                            const subQRules = subQ.rules || {};
+                            let subValue;
+
                             if (subInputWrapper) {
                                 if (subQ.type === 'seleccion_multiple') {
-                                    itemData[subQ.name] = [...subInputWrapper.querySelectorAll(`input[name="${subId}"]:checked`)].map(i => i.value);
+                                    const selected = [];
+                                    subInputWrapper.querySelectorAll(`input[name="${subId}"]:checked`).forEach(input => {
+                                        if (subQRules.quantity) {
+                                            const quantitySelect = subInputWrapper.querySelector(`#${input.id}-quantity`);
+                                            selected.push({ option: input.value, quantity: parseInt(quantitySelect.value, 10) || 0 });
+                                        } else {
+                                            selected.push(input.value);
+                                        }
+                                    });
+                                    subValue = selected;
+                                } else if (subQ.type === 'seleccion_unica') {
+                                    const input = subInputWrapper.querySelector(`input[name="${subId}"]:checked`);
+                                    if (input) {
+                                        if (subQRules.quantity) {
+                                            const quantitySelect = subInputWrapper.querySelector(`#${input.id}-quantity`);
+                                            subValue = { option: input.value, quantity: parseInt(quantitySelect.value, 10) || 0 };
+                                        } else {
+                                            subValue = input.value;
+                                        }
+                                    } else {
+                                        const selectInput = subInputWrapper.querySelector(`select[name="${subId}"]`);
+                                        if(selectInput) subValue = selectInput.value;
+                                    }
+                                } else if (subQ.type === 'listado_definido') {
+                                    const listData = {};
+                                    const listContainer = subInputWrapper.querySelector(`#${subId}`);
+                                    if (listContainer) {
+                                        listContainer.querySelectorAll('.defined-list-input').forEach(input => {
+                                            const optionName = input.dataset.optionName;
+                                            const numValue = parseInt(input.value, 10);
+                                            if (optionName && !isNaN(numValue)) {
+                                                listData[optionName] = numValue;
+                                            }
+                                        });
+                                    }
+                                    subValue = listData;
                                 } else if (subQ.type === 'seleccion_dependiente') {
                                     const parentVal = subInputWrapper.querySelector(`select[name="${subId}-parent"]`).value;
                                     const childVal = subInputWrapper.querySelector(`select[name="${subId}-child"]`).value;
-                                    itemData[subQ.name] = { parent: parentVal, child: childVal };
+                                    subValue = { parent: parentVal, child: childVal };
                                 } else {
-                                    const subInput = subInputWrapper.querySelector(`[name="${subId}"]`);
+                                    const subInput = subInputWrapper.querySelector(`input[name="${subId}"], select[name="${subId}"], textarea[name="${subId}"]`);
                                     if (subInput) {
-                                        itemData[subQ.name] = (subInput.type === 'checkbox') ? subInput.checked : subInput.value;
+                                        subValue = (subInput.type === 'checkbox') ? subInput.checked : subInput.value;
                                     }
                                 }
+                            }
+                            if (subValue !== undefined) {
+                                itemData[subQ.name] = subValue;
                             }
                         });
                         repartidorItems.push(itemData);
