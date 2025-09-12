@@ -50,19 +50,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const addRepartidorSubQuestionBtn = document.getElementById('add-repartidor-sub-question-btn');
     const closeQuestionModalBtn = questionModal.querySelector('.close-button');
 
-    // --- NUEVO: Referencias para Lógica de Cantidad ---
+    const enableQuantityGroupDiv = document.getElementById('enable-quantity-group');
     const enableQuantityCheckbox = document.getElementById('enable-quantity-checkbox');
     const quantityGroupDiv = document.getElementById('quantity-group');
     const quantityMinInput = document.getElementById('quantity-min');
     const quantityMaxInput = document.getElementById('quantity-max');
 
-    // --- NUEVO: Referencias para Lógica Condicional ---
     const makeConditionalCheckbox = document.getElementById('make-conditional-checkbox');
     const conditionalGroupDiv = document.getElementById('conditional-group');
     const conditionalTriggerQuestionSelect = document.getElementById('conditional-trigger-question');
     const conditionalTriggerValueInput = document.getElementById('conditional-trigger-value');
 
-    // --- NUEVO: Referencias para Página de Resultados ---
     const resultsPage = document.getElementById('results-page');
     const resultsLink = document.getElementById('results-link');
     const submissionsListDiv = document.getElementById('submissions-list');
@@ -81,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
         login: (email, password) => fetchApi('/auth/login', { method: 'POST', body: { email, password } }),
         register: (email, password, rol) => fetchApi('/auth/register', { method: 'POST', body: { email, password, rol } }),
         getFormularios: () => fetchApi('/formularios'),
-        getSubmissions: () => fetchApi('/submissions'), // NUEVO
+        getSubmissions: () => fetchApi('/submissions'),
         createFormulario: (name, created_by) => fetchApi('/formularios', { method: 'POST', body: { name, created_by } }),
         createModule: (formId, name) => fetchApi(`/formularios/${formId}/modulos`, { method: 'POST', body: { name } }),
         updateModule: (id, name) => fetchApi(`/modulos/${id}`, { method: 'PUT', body: { name } }),
@@ -102,7 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' } 
             };
 
-            // AÑADIDO: Incluir el ID de usuario en las cabeceras si está logueado
             if (currentUser && currentUser.id) {
                 config.headers['X-User-ID'] = currentUser.id;
             }
@@ -118,17 +115,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (!response.ok) {
-                // MODIFICADO: Crear un error más detallado para el modal
                 let errorMessage = data.error || 'Error desconocido.';
                 if (data.details) {
-                    errorMessage += `
-
-Detalles: ${data.details}`;
+                    errorMessage += `\n\nDetalles: ${data.details}`;
                 }
-                if (data.stack) { // Incluir el stack si está disponible
-                    errorMessage += `
-
-Stack: ${data.stack}`;
+                if (data.stack) {
+                    errorMessage += `\n\nStack: ${data.stack}`;
                 }
                 throw new Error(errorMessage);
             }
@@ -137,7 +129,7 @@ Stack: ${data.stack}`;
             return data;
         } catch (error) {
             console.error(`API Error: ${endpoint}`, error);
-            showAlert('Error de API', error.message); // Ahora error.message será detallado
+            showAlert('Error de API', error.message);
             throw error;
         }
     }
@@ -160,16 +152,12 @@ Stack: ${data.stack}`;
     function showAppPage(pageToShow) {
         configPage.style.display = 'none';
         formPage.style.display = 'none';
-        resultsPage.style.display = 'none'; // Ocultar la nueva página
+        resultsPage.style.display = 'none';
         pageToShow.style.display = 'block';
-        // El título se puede manejar dentro de cada función de carga
     }
 
     function updateUIAccess(role) {
         try {
-            console.log('updateUIAccess called with role:', role);
-
-            // Get references to elements, checking if they exist
             const configLink = document.getElementById('config-link');
             const resultsLink = document.getElementById('results-link');
             const addFormularioBtn = document.getElementById('add-formulario-btn');
@@ -179,56 +167,28 @@ Stack: ${data.stack}`;
             const createUserModal = document.getElementById('create-user-modal');
             const configPage = document.getElementById('config-page');
             const resultsPage = document.getElementById('results-page');
-            const formLink = document.getElementById('form-link'); // Ensure formLink is also available
+            const formLink = document.getElementById('form-link');
 
-            console.log('Elements found status:');
-            console.log('configLink:', configLink ? 'found' : 'NOT found');
-            console.log('resultsLink:', resultsLink ? 'found' : 'NOT found');
-            console.log('addFormularioBtn:', addFormularioBtn ? 'found' : 'NOT found');
-            console.log('addModuleBtn:', addModuleBtn ? 'found' : 'NOT found');
-            console.log('addQuestionBtn:', addQuestionBtn ? 'found' : 'NOT found');
-            console.log('exportCsvBtn:', exportCsvBtn ? 'found' : 'NOT found');
-            console.log('createUserModal:', createUserModal ? 'found' : 'NOT found');
-
-            // Ocultar todos los elementos de administrador por defecto
-            console.log('Hiding admin elements...');
             if (configLink) configLink.style.display = 'none';
             if (resultsLink) resultsLink.style.display = 'none';
             if (addFormularioBtn) addFormularioBtn.style.display = 'none';
             if (addModuleBtn) addModuleBtn.style.display = 'none';
             if (addQuestionBtn) addQuestionBtn.style.display = 'none';
             if (exportCsvBtn) exportCsvBtn.style.display = 'none';
-            if (createUserModal) createUserModal.style.display = 'none'; // Asegurarse de que el modal de crear usuario esté oculto
-
-            console.log('Current display states after initial hide:');
-            console.log('configLink display:', configLink ? configLink.style.display : 'N/A');
-            console.log('resultsLink display:', resultsLink ? resultsLink.style.display : 'N/A');
-            console.log('addFormularioBtn display:', addFormularioBtn ? addFormularioBtn.style.display : 'N/A');
-            console.log('addModuleBtn display:', addModuleBtn ? addModuleBtn.style.display : 'N/A');
-            console.log('addQuestionBtn display:', addQuestionBtn ? addQuestionBtn.style.display : 'N/A');
-            console.log('exportCsvBtn display:', exportCsvBtn ? exportCsvBtn.style.display : 'N/A');
-            console.log('createUserModal display:', createUserModal ? createUserModal.style.display : 'N/A');
-
+            if (createUserModal) createUserModal.style.display = 'none';
 
             if (role === 'admin') {
-                console.log('User is admin. Showing admin elements...');
-                if (configLink) configLink.style.display = 'block';
-                if (resultsLink) resultsLink.style.display = 'block';
-                if (addFormularioBtn) addFormularioBtn.style.display = 'inline-block'; // O el display original que tuvieran
+                if (configLink) configLink.style.display = 'flex';
+                if (resultsLink) resultsLink.style.display = 'flex';
+                if (addFormularioBtn) addFormularioBtn.style.display = 'inline-block';
                 if (addModuleBtn) addModuleBtn.style.display = 'inline-block';
                 if (addQuestionBtn) addQuestionBtn.style.display = 'inline-block';
                 if (exportCsvBtn) exportCsvBtn.style.display = 'inline-block';
-                // El botón de crear usuario se maneja en renderAdminControls
             } else {
-                console.log('User is not admin. Hiding admin elements and redirecting if necessary...');
-                // Si el usuario no es admin y está en una página de admin, redirigirlo a la página de formularios
-                // Asegurarse de que configPage y resultsPage también estén disponibles
                 if (configPage && resultsPage && (configPage.style.display === 'block' || resultsPage.style.display === 'block')) {
-                    console.log('Redirecting non-admin user from admin page to form page.');
-                    if (formLink) formLink.click(); // Simular clic en el enlace de formularios
+                    if (formLink) formLink.click();
                 }
             }
-            console.log('updateUIAccess finished.');
         } catch (error) {
             console.error('Error in updateUIAccess:', error);
         }
@@ -273,8 +233,7 @@ Stack: ${data.stack}`;
         }
     }
 
-        function renderSubmissionDetails(submissionId) {
-        // Marcar item activo en la lista
+    function renderSubmissionDetails(submissionId) {
         document.querySelectorAll('.submission-item').forEach(item => {
             item.classList.toggle('active', item.dataset.id === submissionId);
         });
@@ -304,9 +263,7 @@ Stack: ${data.stack}`;
         for (const [pregunta, respuesta] of Object.entries(respuestas)) {
             let formattedRespuesta;
 
-            // NUEVO: Lógica para normalizar respuestas de tipo repartidor y otros objetos
             if (Array.isArray(respuesta) && respuesta.every(item => typeof item === 'object')) {
-                // Asumimos que es una respuesta de tipo repartidor
                 formattedRespuesta = '<table><thead><tr>';
                 if (respuesta.length > 0) {
                     Object.keys(respuesta[0]).forEach(key => {
@@ -324,10 +281,8 @@ Stack: ${data.stack}`;
                 }
                 formattedRespuesta += '</table>';
             } else if (typeof respuesta === 'object' && respuesta !== null) {
-                // Para otros objetos, como selección dependiente
                 formattedRespuesta = `<pre>${JSON.stringify(respuesta, null, 2)}</pre>`;
             } else {
-                // Para valores simples (texto, número, etc.)
                 formattedRespuesta = respuesta ? respuesta.toString() : '';
             }
 
@@ -343,10 +298,9 @@ Stack: ${data.stack}`;
         submissionDetailsDiv.innerHTML = tableHtml;
     }
 
-    // --- LÓGICA PRINCIPAL DE LA APP (ACTUALIZADA) ---
+    // --- LÓGICA PRINCIPAL DE LA APP ---
     async function initializeApp() {
-        console.log('Calling updateUIAccess from initializeApp...'); // NEW LOG
-        updateUIAccess(currentUser.rol); // Mover aquí la llamada
+        updateUIAccess(currentUser.rol);
         configLink.addEventListener('click', async e => { 
             e.preventDefault(); 
             showAppPage(configPage); 
@@ -376,15 +330,12 @@ Stack: ${data.stack}`;
             }
         });
 
-        const exportCsvBtn = document.getElementById('export-csv-btn');
         if(exportCsvBtn) exportCsvBtn.addEventListener('click', exportToCsv);
 
-        // Iniciar en la página de formularios por defecto
         formLink.click();
     }
 
-    // --- INICIALIZACIÓN ---
-
+    // --- LÓGICA DE CONFIGURACIÓN ---
     async function refreshFormsCache() { cachedForms = await api.getFormularios(); }
 
     async function loadFormulariosConfig() {
@@ -453,21 +404,15 @@ Stack: ${data.stack}`;
         }
         if (target.matches('.delete-question-btn')) {
             const id = target.dataset.id;
-            console.log('DEBUG: Clic en eliminar pregunta. ID:', id);
             if (confirm('¿Seguro que quieres eliminar esta pregunta?')) {
-                console.log('DEBUG: Confirmación de eliminación aceptada.');
                 try {
                     await api.deleteQuestion(id);
-                    console.log('DEBUG: api.deleteQuestion llamada y exitosa.');
                     showAlert('Éxito', 'Pregunta eliminada correctamente.');
                 } catch (error) {
-                    console.error('DEBUG: Error al eliminar pregunta:', error);
                     showAlert('Error', 'No se pudo eliminar la pregunta.');
                 }
                 await refreshFormsCache();
-                console.log('DEBUG: Cache refrescada.');
                 loadQuestionsConfig(currentModuleId, currentModuleNameSpan.textContent);
-                console.log('DEBUG: loadQuestionsConfig llamada.');
             }
         }
         if (target.matches('.edit-module-btn')) {
@@ -522,8 +467,7 @@ Stack: ${data.stack}`;
         patternGroupDiv.style.display = 'none';
         dependentGroupDiv.style.display = 'none';
         repartidorFieldsGroupDiv.style.display = 'none';
-        
-        // NUEVO: Resetear campos de cantidad
+        enableQuantityGroupDiv.style.display = 'none';
         quantityGroupDiv.style.display = 'none';
         enableQuantityCheckbox.checked = false;
         quantityMinInput.value = '1';
@@ -535,12 +479,10 @@ Stack: ${data.stack}`;
 
         editingQuestionId = questionId;
 
-        // CORREGIDO DE NUEVO: Llenar el desplegable de preguntas que pueden ser trigger
         conditionalTriggerQuestionSelect.innerHTML = '<option value="">Selecciona una pregunta...</option>';
         if (currentModuleId) {
             let module;
             for (const form of cachedForms) {
-                // Usar '==' en lugar de '===' para evitar problemas de tipo (string vs number) 
                 const foundModule = (form.modulos || []).find(m => m.id == currentModuleId); 
                 if (foundModule) {
                     module = foundModule;
@@ -570,7 +512,6 @@ Stack: ${data.stack}`;
             let question;
             for (const form of cachedForms) {
                 for (const mod of (form.modulos || [])) {
-                    // Usar '==' aquí también por consistencia
                     const q = (mod.preguntas || []).find(p => p.id == questionId);
                     if (q) { question = q; break; }
                 }
@@ -602,7 +543,6 @@ Stack: ${data.stack}`;
                 conditionalTriggerQuestionSelect.value = rules.conditional.triggerQuestionText;
                 conditionalTriggerValueInput.value = rules.conditional.triggerValue;
             }
-            // NUEVO: Cargar datos de cantidad si existen
             if (rules.quantity) {
                 enableQuantityCheckbox.checked = true;
                 quantityGroupDiv.style.display = 'block';
@@ -618,11 +558,15 @@ Stack: ${data.stack}`;
     function addRepartidorSubQuestion(subQ = null) {
         const item = document.createElement('div');
         item.className = 'repartidor-sub-question-item';
-        const subQuestionTypes = ['texto', 'numero', 'fecha', 'booleano', 'seleccion_unica', 'seleccion_multiple', 'seleccion_dependiente'];
-        const typeOptions = subQuestionTypes.map(t => `<option value="${t}" ${subQ && subQ.type === t ? 'selected' : ''}>${t.replace('_', ' ')}</option>`).join('');
+        const subQuestionTypes = ['texto', 'numero', 'fecha', 'booleano', 'seleccion_unica', 'seleccion_multiple', 'seleccion_dependiente', 'listado_definido'];
+        const typeOptions = subQuestionTypes.map(t => `<option value="${t}" ${subQ && subQ.type === t ? 'selected' : ''}>${t.replace(/_/g, ' ')}</option>`).join('');
         
-        // Determinar si el checkbox debe estar marcado
         const isFirstOnly = subQ && subQ.firstItemOnly ? 'checked' : '';
+        const subQRules = subQ && subQ.rules ? (typeof subQ.rules === 'string' ? JSON.parse(subQ.rules) : subQ.rules) : {};
+        const hasQuantity = subQRules.quantity ? true : false;
+        const quantityMin = hasQuantity ? subQRules.quantity.min : 1;
+        const quantityMax = hasQuantity ? subQRules.quantity.max : 10;
+        const subQOptionsTypes = ['seleccion_unica', 'seleccion_multiple', 'listado_definido'];
 
         item.innerHTML = `
             <div class="form-group"><label>Nombre:</label><input type="text" class="repartidor-sub-q-name" value="${subQ ? subQ.name : ''}" required></div>
@@ -633,20 +577,11 @@ Stack: ${data.stack}`;
                     ¿Solo para el primer elemento?
                 </label>
             </div>
-            <div class="form-group repartidor-sub-q-pattern" style="display: ${subQ && subQ.type === 'texto' ? 'block' : 'none'};">
-                <label>Patrón de Formato:</label>
-                <input type="text" class="repartidor-sub-q-pattern-input" value="${subQ && subQ.rules.pattern ? subQ.rules.pattern : ''}">
-            </div>
-            <div class="form-group repartidor-sub-q-options" style="display: ${subQ && (subQ.type === 'seleccion_unica' || subQ.type === 'seleccion_multiple') ? 'block' : 'none'};">
-                <label>Opciones (separadas por coma):</label>
-                <input type="text" class="repartidor-sub-q-options-input" value="${subQ && subQ.rules.options ? subQ.rules.options.join(', ') : ''}">
-            </div>
-            <div class="form-group repartidor-sub-q-dependent" style="display: ${subQ && subQ.type === 'seleccion_dependiente' ? 'block' : 'none'};">
-                <label>Campo Padre:</label>
-                <input type="text" class="repartidor-sub-q-dependent-parent" value="${subQ && subQ.rules.dependent ? subQ.rules.dependent.parentField : ''}">
-                <label>Campo Hijo:</label>
-                <input type="text" class="repartidor-sub-q-dependent-child" value="${subQ && subQ.rules.dependent ? subQ.rules.dependent.childField : ''}">
-            </div>
+            <div class="form-group repartidor-sub-q-pattern" style="display: ${subQ && subQ.type === 'texto' ? 'block' : 'none'};"><label>Patrón:</label><input type="text" class="repartidor-sub-q-pattern-input" value="${subQRules.pattern || ''}"></div>
+            <div class="form-group repartidor-sub-q-options" style="display: ${subQ && subQOptionsTypes.includes(subQ.type) ? 'block' : 'none'};"><label>Opciones (coma):</label><input type="text" class="repartidor-sub-q-options-input" value="${subQRules.options ? subQRules.options.join(', ') : ''}"></div>
+            <div class="form-group repartidor-sub-q-dependent" style="display: ${subQ && subQ.type === 'seleccion_dependiente' ? 'block' : 'none'};"><label>Padre:</label><input type="text" class="repartidor-sub-q-dependent-parent" value="${subQRules.dependent ? subQRules.dependent.parentField : ''}"><label>Hijo:</label><input type="text" class="repartidor-sub-q-dependent-child" value="${subQRules.dependent ? subQRules.dependent.childField : ''}"></div>
+            <div class="form-group"><label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" class="repartidor-sub-q-enable-quantity" ${hasQuantity ? 'checked' : ''}> Habilitar Cantidad</label></div>
+            <div class="form-group repartidor-sub-q-quantity-group" style="display: ${hasQuantity ? 'block' : 'none'};"><label>Min:</label><input type="number" class="repartidor-sub-q-quantity-min" value="${quantityMin}" min="1"><label>Max:</label><input type="number" class="repartidor-sub-q-quantity-max" value="${quantityMax}" min="1"></div>
             <button type="button" class="remove-sub-q-btn">X</button>
         `;
         repartidorSubQuestionsListDiv.appendChild(item);
@@ -655,11 +590,20 @@ Stack: ${data.stack}`;
 
     closeQuestionModalBtn.addEventListener('click', () => questionModal.style.display = 'none');
     questionTypeSelect.addEventListener('change', () => {
+        const type = questionTypeSelect.value;
         const selectionTypes = ['seleccion_unica', 'seleccion_multiple'];
-        optionsGroupDiv.style.display = selectionTypes.includes(questionTypeSelect.value) ? 'block' : 'none';
-        patternGroupDiv.style.display = questionTypeSelect.value === 'texto' ? 'block' : 'none';
-        dependentGroupDiv.style.display = questionTypeSelect.value === 'seleccion_dependiente' ? 'block' : 'none';
-        repartidorFieldsGroupDiv.style.display = (questionTypeSelect.value === 'repartidor') ? 'block' : 'none';
+        const optionsTypes = ['seleccion_unica', 'seleccion_multiple', 'listado_definido'];
+
+        optionsGroupDiv.style.display = optionsTypes.includes(type) ? 'block' : 'none';
+        patternGroupDiv.style.display = type === 'texto' ? 'block' : 'none';
+        dependentGroupDiv.style.display = type === 'seleccion_dependiente' ? 'block' : 'none';
+        repartidorFieldsGroupDiv.style.display = type === 'repartidor' ? 'block' : 'none';
+
+        enableQuantityGroupDiv.style.display = selectionTypes.includes(type) ? 'block' : 'none';
+        if (!selectionTypes.includes(type)) {
+            enableQuantityCheckbox.checked = false;
+            quantityGroupDiv.style.display = 'none';
+        }
     });
     addRepartidorSubQuestionBtn.addEventListener('click', () => addRepartidorSubQuestion());
 
@@ -667,21 +611,29 @@ Stack: ${data.stack}`;
         conditionalGroupDiv.style.display = makeConditionalCheckbox.checked ? 'block' : 'none';
     });
 
-    // NUEVO: Lógica para el checkbox de habilitar cantidad
     enableQuantityCheckbox.addEventListener('change', () => {
         quantityGroupDiv.style.display = enableQuantityCheckbox.checked ? 'block' : 'none';
     });
 
     repartidorSubQuestionsListDiv.addEventListener('change', e => {
+        const item = e.target.closest('.repartidor-sub-question-item');
+        if (!item) return;
+
         if (e.target.classList.contains('repartidor-sub-q-type')) {
-            const item = e.target.closest('.repartidor-sub-question-item');
             const optionsDiv = item.querySelector('.repartidor-sub-q-options');
             const patternDiv = item.querySelector('.repartidor-sub-q-pattern');
             const dependentDiv = item.querySelector('.repartidor-sub-q-dependent');
-            const selectionTypes = ['seleccion_unica', 'seleccion_multiple'];
-            optionsDiv.style.display = selectionTypes.includes(e.target.value) ? 'block' : 'none';
+            const subQOptionsTypes = ['seleccion_unica', 'seleccion_multiple', 'listado_definido'];
+            optionsDiv.style.display = subQOptionsTypes.includes(e.target.value) ? 'block' : 'none';
             patternDiv.style.display = e.target.value === 'texto' ? 'block' : 'none';
             dependentDiv.style.display = e.target.value === 'seleccion_dependiente' ? 'block' : 'none';
+        }
+
+        if (e.target.classList.contains('repartidor-sub-q-enable-quantity')) {
+            const quantityGroup = item.querySelector('.repartidor-sub-q-quantity-group');
+            if (quantityGroup) {
+                quantityGroup.style.display = e.target.checked ? 'block' : 'none';
+            }
         }
     });
 
@@ -692,11 +644,11 @@ Stack: ${data.stack}`;
         if (!text || !type) return showAlert('Error', 'Texto y tipo son obligatorios.');
         
         let rules = {};
-        const selectionTypes = ['seleccion_unica', 'seleccion_multiple'];
+        const optionsTypes = ['seleccion_unica', 'seleccion_multiple', 'listado_definido'];
         if (type === 'texto') {
             const pattern = questionPatternInput.value.trim();
             if (pattern) rules.pattern = pattern;
-        } else if (selectionTypes.includes(type)) {
+        } else if (optionsTypes.includes(type)) {
             const opts = questionOptionsInput.value.trim();
             if (!opts) return showAlert('Error', 'Las opciones son obligatorias.');
             rules.options = opts.split(',').map(o => o.trim());
@@ -713,10 +665,12 @@ Stack: ${data.stack}`;
                 const subType = item.querySelector('.repartidor-sub-q-type').value;
                 if (!name || !subType) return showAlert('Error', 'Todas las sub-preguntas deben tener nombre y tipo.');
                 const subQ = { name, type: subType, rules: {} };
+                const subQOptionsTypes = ['seleccion_unica', 'seleccion_multiple', 'listado_definido'];
+
                 if (subType === 'texto') {
                     const pattern = item.querySelector('.repartidor-sub-q-pattern-input').value.trim();
                     if (pattern) subQ.rules.pattern = pattern;
-                } else if (selectionTypes.includes(subType)) {
+                } else if (subQOptionsTypes.includes(subType)) {
                     const opts = item.querySelector('.repartidor-sub-q-options-input').value.trim();
                     if (!opts) return showAlert('Error', `Las opciones para "${name}" son obligatorias.`);
                     subQ.rules.options = opts.split(',').map(o => o.trim());
@@ -727,7 +681,16 @@ Stack: ${data.stack}`;
                     subQ.rules.dependent = { parentField, childField, table: 'geografia_colombia' };
                 }
 
-                // NUEVO: Guardar la regla de "solo primer elemento"
+                const enableSubQQuantity = item.querySelector('.repartidor-sub-q-enable-quantity').checked;
+                if (enableSubQQuantity) {
+                    const min = parseInt(item.querySelector('.repartidor-sub-q-quantity-min').value, 10);
+                    const max = parseInt(item.querySelector('.repartidor-sub-q-quantity-max').value, 10);
+                    if (isNaN(min) || isNaN(max) || min < 1 || max < min) {
+                        return showAlert('Error', `Los valores de cantidad para la sub-pregunta "${name}" no son válidos.`);
+                    }
+                    subQ.rules.quantity = { min, max };
+                }
+
                 const firstOnlyCheckbox = item.querySelector('.repartidor-sub-q-first-only');
                 if (firstOnlyCheckbox && firstOnlyCheckbox.checked) {
                     subQ.firstItemOnly = true;
@@ -739,8 +702,7 @@ Stack: ${data.stack}`;
             rules.subQuestions = subQuestions;
         }
 
-        // NUEVO: Guardar la regla de cantidad
-        if (enableQuantityCheckbox.checked) {
+        if (type !== 'repartidor' && enableQuantityCheckbox.checked) {
             const min = parseInt(quantityMinInput.value, 10);
             const max = parseInt(quantityMaxInput.value, 10);
             if (isNaN(min) || isNaN(max) || min < 1 || max < min) {
@@ -749,7 +711,6 @@ Stack: ${data.stack}`;
             rules.quantity = { min, max };
         }
 
-        // NUEVO: Guardar la regla condicional
         if (makeConditionalCheckbox.checked) {
             const triggerQuestionText = conditionalTriggerQuestionSelect.value;
             const triggerValue = conditionalTriggerValueInput.value.trim();
@@ -759,37 +720,27 @@ Stack: ${data.stack}`;
             rules.conditional = {
                 triggerQuestionText,
                 triggerValue,
-                operator: 'equals' // Hardcoded for now
+                operator: 'equals'
             };
         }
 
         const questionData = { text, type, rules: JSON.stringify(rules) };
 
-        if (editingQuestionId) {
-            console.log('DEBUG: Intentando actualizar pregunta. ID:', editingQuestionId, 'Datos:', questionData);
-            try {
+        try {
+            if (editingQuestionId) {
                 await api.updateQuestion(editingQuestionId, questionData);
-                console.log('DEBUG: api.updateQuestion llamada y exitosa.');
                 showAlert('Éxito', 'Pregunta actualizada correctamente.');
-            } catch (error) {
-                console.error('DEBUG: Error al actualizar pregunta:', error);
-                showAlert('Error', 'No se pudo actualizar la pregunta.');
-            }
-        } else {
-            console.log('DEBUG: Intentando crear pregunta. Datos:', questionData);
-            try {
+            } else {
                 await api.createQuestion(currentModuleId, questionData);
-                console.log('DEBUG: api.createQuestion llamada y exitosa.');
                 showAlert('Éxito', 'Pregunta creada correctamente.');
-            } catch (error) {
-                console.error('DEBUG: Error al crear pregunta:', error);
-                showAlert('Error', 'No se pudo crear la pregunta.');
             }
+            
+            questionModal.style.display = 'none';
+            await refreshFormsCache();
+            loadQuestionsConfig(currentModuleId, currentModuleNameSpan.textContent);
+        } catch (error) {
+            showAlert('Error', 'No se pudo guardar la pregunta.');
         }
-        
-        questionModal.style.display = 'none';
-        await refreshFormsCache();
-        loadQuestionsConfig(currentModuleId, currentModuleNameSpan.textContent);
     });
 
     // --- LÓGICA PARA RELLENAR FORMULARIOS ---
@@ -819,43 +770,34 @@ Stack: ${data.stack}`;
         formEl.addEventListener('submit', e => handleFormSubmit(e, form.id, questions));
         formsRenderContainer.appendChild(formEl);
 
-        // NUEVO: Activar la lógica condicional para el formulario renderizado
         setupConditionalListeners(formEl);
     }
 
-    // --- NUEVO: LÓGICA DE FORMULARIO CONDICIONAL ---
     function setupConditionalListeners(formEl) {
         const triggers = new Set();
-        // Recolectar todos los nombres de las preguntas que actúan como triggers
         formEl.querySelectorAll('[data-conditional-trigger]').forEach(el => {
             triggers.add(el.dataset.conditionalTrigger);
         });
 
         triggers.forEach(triggerName => {
-            // Encontrar el contenedor de la pregunta trigger
             const triggerWrapper = formEl.querySelector(`[data-question-name="${triggerName}"]`);
             if (triggerWrapper) {
-                // Encontrar el campo de input/select dentro del contenedor
                 const input = triggerWrapper.querySelector('input, select');
                 if (input) {
-                    // Escuchar cambios en el valor del campo
                     input.addEventListener('change', () => evaluateConditions(formEl));
                 }
             }
         });
-        // Evaluar las condiciones una vez al inicio para establecer el estado inicial correcto
         evaluateConditions(formEl);
     }
 
     function evaluateConditions(formEl) {
         const currentValues = {};
-        // Primero, obtener todos los valores actuales del formulario
         formEl.querySelectorAll('[data-question-name]').forEach(qWrapper => {
             const qName = qWrapper.dataset.questionName;
             const input = qWrapper.querySelector('input, select');
             if (input) {
                 if (input.type === 'checkbox') {
-                    // Para checkboxes, el valor es 'true' o 'false' como texto
                     currentValues[qName] = input.checked ? 'true' : 'false';
                 } else {
                     currentValues[qName] = input.value;
@@ -863,20 +805,17 @@ Stack: ${data.stack}`;
             }
         });
 
-        // Luego, iterar sobre cada pregunta que tiene una regla condicional
         formEl.querySelectorAll('[data-conditional-trigger]').forEach(el => {
             const triggerName = el.dataset.conditionalTrigger;
             const expectedValueString = el.dataset.conditionalValue;
             const actualValue = currentValues[triggerName];
 
-            // NUEVO: Lógica para soportar múltiples valores separados por coma
             const possibleValues = expectedValueString.split(',').map(v => v.trim());
 
-            // Comprobar si el valor actual está en la lista de valores posibles
             if (possibleValues.includes(actualValue)) {
-                el.style.display = ''; // Mostrar el elemento (revierte al display por defecto)
+                el.style.display = '';
             } else {
-                el.style.display = 'none'; // Ocultar el elemento
+                el.style.display = 'none';
             }
         });
     }
@@ -890,9 +829,8 @@ Stack: ${data.stack}`;
         wrapper.className = 'form-group';
         wrapper.setAttribute('data-question-name', questionName);
 
-        // NUEVO: Aplicar regla condicional
         if (rules.conditional) {
-            wrapper.style.display = 'none'; // Ocultar por defecto
+            wrapper.style.display = 'none';
             wrapper.setAttribute('data-conditional-trigger', rules.conditional.triggerQuestionText);
             wrapper.setAttribute('data-conditional-value', rules.conditional.triggerValue);
         }
@@ -912,9 +850,8 @@ Stack: ${data.stack}`;
                 itemDiv.className = 'repartidor-item';
                 itemDiv.setAttribute('data-item-index', repartidorItemCounter);
                 (rules.subQuestions || []).forEach(subQ => {
-                    // NUEVO: Lógica para "solo primer elemento"
                     if (subQ.firstItemOnly && repartidorItemCounter > 0) {
-                        return; // No renderizar esta sub-pregunta
+                        return;
                     }
                     itemDiv.appendChild(createQuestionElement(subQ, true, repartidorItemCounter, api));
                 });
@@ -953,8 +890,31 @@ Stack: ${data.stack}`;
             case 'numero': inputEl = document.createElement('input'); inputEl.type = 'number'; break;
             case 'fecha': inputEl = document.createElement('input'); inputEl.type = 'date'; break;
             case 'booleano': case 'terminos': inputEl = document.createElement('input'); inputEl.type = 'checkbox'; break;
+            case 'listado_definido':
+                inputEl = document.createElement('div');
+                inputEl.className = 'defined-list-group';
+                inputEl.id = id;
+                (rules.options || []).forEach(opt => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'defined-list-item';
+                    
+                    const itemLabel = document.createElement('label');
+                    itemLabel.textContent = opt;
+                    itemLabel.style.marginRight = '10px';
+
+                    const numInput = document.createElement('input');
+                    numInput.type = 'number';
+                    numInput.min = '0';
+                    numInput.value = '0';
+                    numInput.dataset.optionName = opt;
+                    numInput.className = 'defined-list-input';
+
+                    itemDiv.appendChild(itemLabel);
+                    itemDiv.appendChild(numInput);
+                    inputEl.appendChild(itemDiv);
+                });
+                break;
             case 'seleccion_unica':
-                // MODIFICADO: para incluir selector de cantidad
                 if (rules.quantity) {
                     inputEl = document.createElement('div');
                     inputEl.className = 'quantity-options-group';
@@ -976,7 +936,7 @@ Stack: ${data.stack}`;
                         const quantitySelect = document.createElement('select');
                         quantitySelect.id = `${optionId}-quantity`;
                         quantitySelect.className = 'quantity-selector';
-                        quantitySelect.style.display = 'none'; // Oculto por defecto
+                        quantitySelect.style.display = 'none';
                         for (let i = rules.quantity.min; i <= rules.quantity.max; i++) {
                             const qOpt = document.createElement('option');
                             qOpt.value = i;
@@ -985,9 +945,7 @@ Stack: ${data.stack}`;
                         }
                         
                         radioInput.addEventListener('change', () => {
-                            // Ocultar todos los selectores de cantidad del grupo
                             inputEl.querySelectorAll('.quantity-selector').forEach(sel => sel.style.display = 'none');
-                            // Mostrar solo el selector de la opción seleccionada
                             if(radioInput.checked) {
                                 quantitySelect.style.display = 'inline-block';
                             }
@@ -1010,7 +968,6 @@ Stack: ${data.stack}`;
                 }
                 break;
             case 'seleccion_multiple':
-                // MODIFICADO: para incluir selector de cantidad
                 inputEl = document.createElement('div');
                 inputEl.className = 'checkbox-group';
                 (rules.options || []).forEach((opt, index) => {
@@ -1036,7 +993,7 @@ Stack: ${data.stack}`;
                         const quantitySelect = document.createElement('select');
                         quantitySelect.id = `${checkId}-quantity`;
                         quantitySelect.className = 'quantity-selector';
-                        quantitySelect.style.display = 'none'; // Oculto por defecto
+                        quantitySelect.style.display = 'none';
                         for (let i = rules.quantity.min; i <= rules.quantity.max; i++) {
                             const qOpt = document.createElement('option');
                             qOpt.value = i;
@@ -1096,21 +1053,20 @@ Stack: ${data.stack}`;
                 break;
             default: inputEl = document.createElement('input'); inputEl.type = 'text'; break;
         }
-        if (type !== 'seleccion_multiple' && type !== 'seleccion_dependiente' && !(type === 'seleccion_unica' && rules.quantity)) { inputEl.id = id; inputEl.name = id; }
-        if (type === 'texto' && rules.pattern) { inputEl.pattern = rules.pattern; inputEl.title = `Debe seguir el formato: ${rules.pattern}`; }
+        if (type !== 'seleccion_multiple' && type !== 'seleccion_dependiente' && !(type === 'seleccion_unica' && rules.quantity) && type !== 'listado_definido') { inputEl.id = id; inputEl.name = id; }
+        if (type === 'texto' && rules.pattern) { inputEl.pattern = rules.pattern; inputEl.title = `Debe seguir el formato: ${rules.pattern}`}
         return inputEl;
     }
 
     async function handleFormSubmit(event, formId, questions) {
         event.preventDefault();
         const formEl = event.target;
-        const respuestas = {}; // CORREGIDO: Crear un solo objeto
+        const respuestas = {};
 
         for (const q of questions) {
-            // No enviar la respuesta si la pregunta está oculta por lógica condicional
             const wrapper = formEl.querySelector(`[data-question-name="${q.text}"]`);
             if (wrapper && wrapper.style.display === 'none') {
-                continue; // Saltar a la siguiente pregunta
+                continue;
             }
 
             const questionName = q.text;
@@ -1130,7 +1086,6 @@ Stack: ${data.stack}`;
                             const subId = `sub-q-${item.dataset.itemIndex}-${subQ.name.replace(/\s+/g, '-')}`;
                             const subInputWrapper = item.querySelector(`[data-question-name="${subQ.name}"]`);
                             
-                            // Solo procesar sub-preguntas que están visibles
                             if (subInputWrapper) {
                                 if (subQ.type === 'seleccion_multiple') {
                                     itemData[subQ.name] = [...subInputWrapper.querySelectorAll(`input[name="${subId}"]:checked`)].map(i => i.value);
@@ -1150,8 +1105,20 @@ Stack: ${data.stack}`;
                     });
                 }
                 questionValue = repartidorItems;
+            } else if (q.type === 'listado_definido') {
+                const listData = {};
+                const container = formEl.querySelector(`#q-${q.id}`);
+                if (container) {
+                    container.querySelectorAll('.defined-list-input').forEach(input => {
+                        const optionName = input.dataset.optionName;
+                        const numValue = parseInt(input.value, 10);
+                        if (optionName && !isNaN(numValue)) {
+                            listData[optionName] = numValue;
+                        }
+                    });
+                }
+                questionValue = listData;
             } else if (q.type === 'seleccion_multiple') {
-                // MODIFICADO: para manejar cantidad
                 const selected = [];
                 formEl.querySelectorAll(`input[name="${id}"]:checked`).forEach(input => {
                     if (rules.quantity) {
@@ -1163,7 +1130,6 @@ Stack: ${data.stack}`;
                 });
                 questionValue = selected;
             } else if (q.type === 'seleccion_unica') {
-                // MODIFICADO: para manejar cantidad
                 const input = formEl.querySelector(`input[name="${id}"]:checked`);
                 if (input) {
                     if (rules.quantity) {
@@ -1171,7 +1137,6 @@ Stack: ${data.stack}`;
                         questionValue = { option: input.value, quantity: parseInt(quantitySelect.value, 10) };
                     }
                 } else {
-                    // This case is for the original <select> based implementation
                     const selectInput = formEl.querySelector(`select[name="${id}"]`);
                     if(selectInput) questionValue = selectInput.value;
                 }
@@ -1186,7 +1151,6 @@ Stack: ${data.stack}`;
                 }
             }
             
-            // Asignar el valor al objeto usando el nombre de la pregunta como clave
             if (questionValue !== undefined && questionValue !== null && (questionValue.length === undefined || questionValue.length !== 0) ) {
                  respuestas[questionName] = questionValue;
             }
@@ -1196,7 +1160,6 @@ Stack: ${data.stack}`;
             if (!currentUser || !currentUser.id) {
                 return showAlert('Error de Autenticación', 'No se pudo identificar al usuario. Por favor, inicie sesión de nuevo.');
             }
-            // La API ahora espera el objeto directamente
             await api.submitForm(formId, currentUser.id, respuestas);
             showAlert('Éxito', 'Formulario enviado correctamente.');
             loadFormulariosForFilling();
@@ -1216,8 +1179,6 @@ Stack: ${data.stack}`;
         if (cell === null || cell === undefined) {
             return '';
         }
-        // Objects are now pre-flattened, so we just convert to string.
-        // If an object somehow still gets here, stringify it to avoid '[object Object]'.
         if (typeof cell === 'object') {
             cell = JSON.stringify(cell);
         }
@@ -1234,10 +1195,8 @@ Stack: ${data.stack}`;
             return showAlert('Info', 'No hay datos para exportar.');
         }
 
-        const allRows = [];
         const headers = new Set(['ID de Envío', 'Fecha', 'Formulario', 'Usuario']);
 
-        // Primera pasada: aplanar todas las respuestas y determinar los encabezados dinámicos
         const flattenedData = cachedSubmissions.map(sub => {
             const flatRow = {
                 'ID de Envío': sub.id,
@@ -1246,163 +1205,77 @@ Stack: ${data.stack}`;
                 'Usuario': sub.usuarios ? sub.usuarios.email : 'N/A'
             };
 
-            const repartidorItems = [];
-            let repartidorKeyOriginal = null;
-
             if (sub.respuestas) {
                 for (const [key, value] of Object.entries(sub.respuestas)) {
                     if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') {
-                        // Potencial repartidor
-                        repartidorKeyOriginal = key;
                         value.forEach(item => {
-                            const repartidorItem = {};
                             for (const [subKey, subValue] of Object.entries(item)) {
                                 const headerName = `${key}.${subKey}`;
                                 headers.add(headerName);
-                                repartidorItem[headerName] = subValue;
                             }
-                            repartidorItems.push(repartidorItem);
                         });
                     } else if (typeof value === 'object' && value !== null) {
-                        // Objeto simple (como ubicación)
                         for (const [subKey, subValue] of Object.entries(value)) {
                             const headerName = `${key}.${subKey}`;
                             headers.add(headerName);
-                            flatRow[headerName] = subValue;
                         }
                     } else {
-                        // Valor simple
                         headers.add(key);
-                        flatRow[key] = value;
                     }
                 }
             }
-
-            // Si había un repartidor, crear una fila por cada item del repartidor
-            if (repartidorItems.length > 0) {
-                return repartidorItems.map(item => ({ ...flatRow, ...item }));
-            } else {
-                return [flatRow]; // Devolver como array para consistencia
-            }
+            return flatRow;
         });
 
-        // Aplanar el array de arrays
-        const finalRows = flattenedData.flat();
         const headerArray = [...headers];
-
         let csvContent = headerArray.map(escapeCsvCell).join(',') + '\r\n';
 
-        finalRows.forEach(row => {
-            const rowValues = headerArray.map(header => {
-                const value = row[header];
-                return escapeCsvCell(value);
-            });
-            csvContent += rowValues.join(',') + '\r\n';
-        });
-
-        const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); // Añadir BOM para Excel
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `export_formularios_${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    alertCloseButton.addEventListener('click', () => alertModal.style.display = 'none');
-
-    // --- LÓGICA DE EXPORTACIÓN A CSV ---
-    function escapeCsvCell(cell) {
-        if (cell === null || cell === undefined) {
-            return '';
-        }
-        // Objects are now pre-flattened, so we just convert to string.
-        // If an object somehow still gets here, stringify it to avoid '[object Object]'.
-        if (typeof cell === 'object') {
-            cell = JSON.stringify(cell);
-        }
-        let str = String(cell);
-        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-            str = str.replace(/"/g, '""');
-            return `"${str}"`;
-        }
-        return str;
-    }
-
-    function exportToCsv() {
-        if (cachedSubmissions.length === 0) {
-            return showAlert('Info', 'No hay datos para exportar.');
-        }
-
-        const allRows = [];
-        const headers = new Set(['ID de Envío', 'Fecha', 'Formulario', 'Usuario']);
-
-        // Primera pasada: aplanar todas las respuestas y determinar los encabezados dinámicos
-        const flattenedData = cachedSubmissions.map(sub => {
-            const flatRow = {
+        cachedSubmissions.forEach(sub => {
+            const baseRow = {
                 'ID de Envío': sub.id,
                 'Fecha': new Date(sub.created_at).toLocaleString(),
                 'Formulario': sub.formularios ? sub.formularios.name : 'N/A',
                 'Usuario': sub.usuarios ? sub.usuarios.email : 'N/A'
             };
 
-            const repartidorItems = [];
-            let repartidorKeyOriginal = null;
+            let hasRepartidor = false;
+            const repartidorRows = [];
 
-            if (sub.respuestas) {
+            if(sub.respuestas) {
                 for (const [key, value] of Object.entries(sub.respuestas)) {
                     if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') {
-                        // Potencial repartidor
-                        repartidorKeyOriginal = key;
-                        value.forEach(item => {
-                            const repartidorItem = {};
-                            for (const [subKey, subValue] of Object.entries(item)) {
-                                const headerName = `${key}.${subKey}`;
-                                headers.add(headerName);
-                                repartidorItem[headerName] = subValue;
+                        hasRepartidor = true;
+                        value.forEach(repartidorItem => {
+                            const newRow = {...baseRow};
+                            for(const h of headerArray) {
+                                if(sub.respuestas[h]) newRow[h] = sub.respuestas[h];
+                                if(repartidorItem[h.split('.')[1]]) newRow[h] = repartidorItem[h.split('.')[1]];
                             }
-                            repartidorItems.push(repartidorItem);
+                            repartidorRows.push(headerArray.map(header => newRow[header] || '').map(escapeCsvCell).join(','));
                         });
-                    } else if (typeof value === 'object' && value !== null) {
-                        // Objeto simple (como ubicación)
-                        for (const [subKey, subValue] of Object.entries(value)) {
-                            const headerName = `${key}.${subKey}`;
-                            headers.add(headerName);
-                            flatRow[headerName] = subValue;
-                        }
-                    } else {
-                        // Valor simple
-                        headers.add(key);
-                        flatRow[key] = value;
+                        break; 
                     }
                 }
             }
 
-            // Si había un repartidor, crear una fila por cada item del repartidor
-            if (repartidorItems.length > 0) {
-                return repartidorItems.map(item => ({ ...flatRow, ...item }));
+            if (hasRepartidor) {
+                csvContent += repartidorRows.join('\r\n') + '\r\n';
             } else {
-                return [flatRow]; // Devolver como array para consistencia
+                const rowValues = headerArray.map(header => {
+                    let val = baseRow[header];
+                    if(sub.respuestas && sub.respuestas[header]) {
+                         val = sub.respuestas[header];
+                    }
+                    if (typeof val === 'object' && val !== null) {
+                        val = JSON.stringify(val);
+                    }
+                    return escapeCsvCell(val);
+                });
+                csvContent += rowValues.join(',') + '\r\n';
             }
         });
 
-        // Aplanar el array de arrays
-        const finalRows = flattenedData.flat();
-        const headerArray = [...headers];
-
-        let csvContent = headerArray.map(escapeCsvCell).join(',') + '\r\n';
-
-        finalRows.forEach(row => {
-            const rowValues = headerArray.map(header => {
-                const value = row[header];
-                return escapeCsvCell(value);
-            });
-            csvContent += rowValues.join(',') + '\r\n';
-        });
-
-        const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); // Añadir BOM para Excel
+        const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
